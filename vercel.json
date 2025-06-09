@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "public": true,
+  "builds": [
+    {
+      "src": "index.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "chat.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "firebase-config.js",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    { "src": "/firebase-config.js", "dest": "/firebase-config.js" },
+    { "src": "/chat.html", "dest": "/chat.html" },
+    { "src": "/", "dest": "/index.html" }
+  ]
+}
