@@ -6,45 +6,42 @@
   <title>XO CHAT</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-[#1c1c2e] text-white">
+<body class="bg-gray-100">
 
-  <!-- Header -->
-  <div class="max-w-5xl mx-auto p-4 flex justify-between items-center">
-    <h2 class="text-xl font-semibold">💬 Xo Chat</h2>
-    <div class="flex items-center space-x-2">
-      <button id="menuToggle" class="md:hidden bg-white text-black px-3 py-1 rounded">☰</button>
-      <button id="logoutBtn" class="bg-red-500 text-white px-3 py-1 rounded">Logout</button>
-    </div>
-  </div>
-
-  <!-- Drawer untuk Mobile -->
-  <div id="mobileDrawer" class="fixed top-0 right-0 w-64 h-full bg-gray-900 text-white transform translate-x-full transition-transform duration-300 z-50 shadow-xl md:hidden">
-    <div class="p-4">
-      <h3 class="font-bold mb-4">🟢 Pengguna Online</h3>
-      <div id="userListMobile" class="space-y-2 text-sm"></div>
-    </div>
-  </div>
-
-  <!-- Konten Utama -->
-  <div class="max-w-5xl mx-auto px-4 mt-4 flex flex-col md:flex-row gap-6">
-    
-    <!-- Chat Area -->
-    <div class="md:w-3/4 flex flex-col">
-      <div id="chatBox" class="bg-gray-800 p-4 h-[400px] overflow-y-auto rounded-lg mb-3"></div>
-      <div class="flex">
-        <input id="messageInput" type="text" placeholder="Tulis pesan..." class="flex-grow p-2 rounded-l bg-gray-700 text-white border-none focus:outline-none">
-        <button id="sendBtn" class="bg-purple-600 hover:bg-purple-700 px-4 rounded-r">Kirim</button>
+  <div class="max-w-5xl mx-auto mt-6 p-4 bg-white rounded-xl shadow-md">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-bold">💬 Xo Chat</h2>
+      <div class="flex items-center gap-2">
+        <button id="toggleUserList" class="md:hidden bg-gray-200 px-2 py-1 rounded">👥</button>
+        <button id="logoutBtn" class="bg-red-500 text-white px-3 py-1 rounded">Logout</button>
       </div>
     </div>
 
-    <!-- Sidebar user (desktop) -->
-    <div class="md:w-1/4 hidden md:block">
-      <h3 class="font-bold mb-2">🟢 Pengguna Online</h3>
-      <div id="userList" class="space-y-2 text-sm"></div>
+    <div class="flex flex-col md:flex-row gap-4">
+      <!-- Chat Area -->
+      <div class="md:w-3/4 w-full flex flex-col">
+        <div id="chatBox" class="border p-3 h-[400px] overflow-y-auto rounded mb-2 bg-gray-50 text-sm"></div>
+        <div class="flex">
+          <input id="messageInput" type="text" placeholder="Tulis pesan..." class="flex-grow p-2 border rounded-l text-sm">
+          <button id="sendBtn" class="bg-violet-600 text-white px-4 rounded-r text-sm">Kirim</button>
+        </div>
+      </div>
+
+      <!-- User List -->
+      <div id="userListContainer" class="md:w-1/4 w-full hidden md:block">
+        <h3 class="font-bold mb-2">🟢 Online Users</h3>
+        <div id="userList" class="text-sm space-y-1"></div>
+      </div>
     </div>
   </div>
 
-  <script type="module" src="/firebase-config.js"></script>
-  <script type="module" src="/chat.js"></script>
+  <script type="module" src="./firebase-config.js"></script>
+  <script type="module" src="./chat.js"></script>
+  <script>
+    document.getElementById("toggleUserList").addEventListener("click", () => {
+      const panel = document.getElementById("userListContainer");
+      panel.classList.toggle("hidden");
+    });
+  </script>
 </body>
 </html>
