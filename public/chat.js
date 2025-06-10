@@ -60,6 +60,60 @@ sendBtn.addEventListener("click", () => {
   messageInput.value = "";
 });
 
+// chat bot
+// Tambahkan fitur AI Copilot jika menyebut @bot
+import { Configuration, OpenAIApi } from "https://cdn.skypack.dev/openai";
+const openai = new OpenAIApi(config);
+
+async function handleBotQuestion(messageText) {
+  if (!messageText.toLowerCase().includes("@bot")) return;
+
+  const prompt = messageText.replace(/@bot/gi, "").trim();
+  if (!prompt) return;
+
+  try {
+    const response = await fetch("/api/ask-bot", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: prompt }),
+    });
+
+    const data = await response.json();
+    const reply = data.reply || "Maaf, saya tidak bisa menjawab.";
+
+    const messagesRef = ref(db, "messages");
+    push(messagesRef, {
+      uid: "copilot-bot",
+      username: "Copilot Bot 🤖",
+      role: "bot",
+      text: reply,
+      timestamp: serverTimestamp()
+    });
+  } catch (err) {
+    console.error("Bot error:", err.message);
+  }
+}
+
+
+// Panggil fungsi AI saat kirim pesan
+sendBtn.addEventListener("click", () => {
+  const text = messageInput.value.trim();
+  if (!text) return;
+
+  const messagesRef = ref(db, "messages");
+  push(messagesRef, {
+    uid: currentUserUID,
+    username: currentUserName,
+    role: currentUserRole,
+    text,
+    timestamp: serverTimestamp()
+  });
+
+  messageInput.value = "";
+
+  // Deteksi jika @bot disebut
+  handleBotQuestion(text);
+});
 // Load pesan
 function loadMessages() {
   const messagesRef = ref(db, "messages");
