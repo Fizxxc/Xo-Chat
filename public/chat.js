@@ -43,7 +43,7 @@ auth.onAuthStateChanged(user => {
   }
 });
 
-// Kirim pesan
+// Fungsi mengirim pesan
 sendBtn.addEventListener("click", () => {
   const text = messageInput.value.trim();
   if (!text) return;
@@ -58,16 +58,15 @@ sendBtn.addEventListener("click", () => {
   });
 
   messageInput.value = "";
+
+  // Jika mengandung @bot, panggil AI
+  if (text.toLowerCase().includes("@bot")) {
+    handleBotQuestion(text);
+  }
 });
 
-// chat bot
-// Tambahkan fitur AI Copilot jika menyebut @bot
-import { Configuration, OpenAIApi } from "https://cdn.skypack.dev/openai";
-const openai = new OpenAIApi(config);
-
+// Fungsi handle pertanyaan ke bot
 async function handleBotQuestion(messageText) {
-  if (!messageText.toLowerCase().includes("@bot")) return;
-
   const prompt = messageText.replace(/@bot/gi, "").trim();
   if (!prompt) return;
 
@@ -94,26 +93,6 @@ async function handleBotQuestion(messageText) {
   }
 }
 
-
-// Panggil fungsi AI saat kirim pesan
-sendBtn.addEventListener("click", () => {
-  const text = messageInput.value.trim();
-  if (!text) return;
-
-  const messagesRef = ref(db, "messages");
-  push(messagesRef, {
-    uid: currentUserUID,
-    username: currentUserName,
-    role: currentUserRole,
-    text,
-    timestamp: serverTimestamp()
-  });
-
-  messageInput.value = "";
-
-  // Deteksi jika @bot disebut
-  handleBotQuestion(text);
-});
 // Load pesan
 function loadMessages() {
   const messagesRef = ref(db, "messages");
