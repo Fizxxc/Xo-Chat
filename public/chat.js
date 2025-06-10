@@ -1,106 +1,92 @@
 // chat.js
-import { auth, db } from "./firebase-config.js";
-import {
-  onAuthStateChanged,
-  signOut
-} from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
-import {
-  ref,
-  onChildAdded,
-  push,
-  set,
-  update,
-  get,
-  child,
-  onValue
-} from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
+import { getDatabase, ref, onValue, push, update, set, serverTimestamp, onDisconnect } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
+import { firebaseConfig } from "./firebase-config.js";
 
-let currentUser = null;
-let userMap = {};
+// Init
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const auth = getAuth(app);
 
+// Elemen
 const chatBox = document.getElementById("chatBox");
 const messageInput = document.getElementById("messageInput");
 const sendBtn = document.getElementById("sendBtn");
+const logoutBtn = document.getElementById("logoutBtn");
 const userList = document.getElementById("userList");
-const statusLabel = document.getElementById("status");
+const userListMobile = document.getElementById("userListMobile");
 
-onAuthStateChanged(auth, async (user) => {
+// Event auth
+onAuthStateChanged(auth, (user) => {
   if (!user) {
-    window.location.href = "index.html";
+    window.location.href = "/"; // logout paksa
     return;
   }
 
-  currentUser = user;
+  const uid = user.uid;
+  const userRef = ref(db, `users/${uid}`);
+  update(userRef, { online: true });
 
-  // Tandai online
-  update(ref(db, "users/" + user.uid), { online: true });
+  // Offline auto update
+  onDisconnect(userRef).update({ online: false });
 
-  // Load data user untuk mention dan role
-  onValue(ref(db, "users"), (snapshot) => {
-    userMap = snapshot.val() || {};
-    updateUserList();
-  });
+  // Kirim pesan
+  sendBtn.onclick = () => {
+    const text = messageInput.value.trim();
+    if (!text) return;
 
-  // Load chat
-  onChildAdded(ref(db, "messages"), (snapshot) => {
-    const msg = snapshot.val();
-    const sender = userMap[msg.uid]?.username || "Unknown";
-    const role = userMap[msg.uid]?.role === "admin" ? `<span class="text-red-500 text-xs">(Admin)</span>` : "";
-    const mentionClass = msg.text.includes(`@${userMap[user.uid]?.username}`) ? "bg-yellow-100" : "";
-
-    const isPrivate = msg.to && msg.to === user.uid;
-
-    if (!msg.to || isPrivate || msg.uid === user.uid) {
-      chatBox.innerHTML += `
-        <div class="p-2 ${mentionClass}">
-          <strong>${sender}</strong> ${role}: ${msg.text}
-        </div>
-      `;
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
-  });
-});
-
-// Kirim pesan
-sendBtn.addEventListener("click", async () => {
-  const text = messageInput.value.trim();
-  if (!text) return;
-
-  let messageData = {
-    uid: currentUser.uid,
-    text,
-    timestamp: Date.now()
+    const messageRef = ref(db, "messages");
+    push(messageRef, {
+      text,
+      timestamp: serverTimestamp(),
+      uid,
+      username: user.displayName || "User",
+    });
+    messageInput.value = "";
   };
 
-  // Deteksi private chat: /pm @username pesan
-  if (text.startsWith("/pm @")) {
-    const split = text.split(" ");
-    const targetUsername = split[1]?.replace("@", "");
-    const target = Object.entries(userMap).find(([, u]) => u.username === targetUsername);
+  // Ambil pesan real-time
+  onValue(ref(db, "messages"), (snapshot) => {
+    chatBox.innerHTML = "";
+    snapshot.forEach((child) => {
+      const { text, username } = child.val();
+      const msg = document.createElement("div");
+      msg.textContent = `${username}: ${text}`;
+      msg.className = "mb-1";
+      chatBox.appendChild(msg);
+    });
+    chatBox.scrollTop = chatBox.scrollHeight;
+  });
 
-    if (target) {
-      const [targetUid] = target;
-      messageData.to = targetUid;
-      messageData.text = split.slice(2).join(" ");
-    }
-  }
+  // Ambil pengguna online
+  const usersRef = ref(db, "users");
+  onValue(usersRef, (snap) => {
+    userList.innerHTML = "";
+    userListMobile.innerHTML = "";
+    snap.forEach((child) => {
+      const user = child.val();
+      if (user.online) {
+        const item = document.createElement("div");
+        item.textContent = user.username || user.email;
+        item.className = "text-white";
+        userList.appendChild(item);
 
-  await push(ref(db, "messages"), messageData);
-  messageInput.value = "";
+        const itemMobile = item.cloneNode(true);
+        userListMobile.appendChild(itemMobile);
+      }
+    });
+  });
 });
 
 // Logout
-document.getElementById("logoutBtn").addEventListener("click", async () => {
-  await update(ref(db, "users/" + currentUser.uid), { online: false });
-  await signOut(auth);
-  location.href = "index.html";
-});
-
-// Tampilkan daftar user
-function updateUserList() {
-  userList.innerHTML = "";
-  for (const [uid, user] of Object.entries(userMap)) {
-    const online = user.online ? "🟢" : "⚪";
-    userList.innerHTML += `<div>@${user.username} ${online}</div>`;
+logoutBtn.onclick = () => {
+  const user = auth.currentUser;
+  if (user) {
+    update(ref(db, `users/${user.uid}`), { online: false }).then(() => {
+      signOut(auth).then(() => {
+        window.location.href = "/";
+      });
+    });
   }
-}
+};
