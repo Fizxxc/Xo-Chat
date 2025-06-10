@@ -1,106 +1,136 @@
-// chat.js
-import { auth, db } from "./firebase-config.js";
+import { auth, db } from './firebase-config.js';
 import {
-  onAuthStateChanged,
-  signOut
-} from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
-import {
-  ref,
-  onChildAdded,
-  push,
-  set,
-  update,
-  get,
-  child,
-  onValue
+  ref, set, push, onChildAdded, serverTimestamp,
+  onValue, update
 } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
 
-let currentUser = null;
-let userMap = {};
+let currentUserUID = null;
+let currentUserName = "";
+let currentUserRole = "user";
 
 const chatBox = document.getElementById("chatBox");
 const messageInput = document.getElementById("messageInput");
 const sendBtn = document.getElementById("sendBtn");
 const userList = document.getElementById("userList");
-const statusLabel = document.getElementById("status");
+const logoutBtn = document.getElementById("logoutBtn");
 
-onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    window.location.href = "index.html";
-    return;
+// Cek login
+auth.onAuthStateChanged(user => {
+  if (user) {
+    currentUserUID = user.uid;
+
+    const userRef = ref(db, `users/${user.uid}`);
+    update(userRef, { online: true });
+
+    window.addEventListener('beforeunload', () => {
+      update(userRef, { online: false });
+    });
+
+    onValue(userRef, (snapshot) => {
+      const data = snapshot.val();
+      currentUserName = data?.username || "Anonim";
+      currentUserRole = data?.role || "user";
+
+      if (currentUserRole === "admin") {
+        showAdminControls();
+      }
+    });
+
+    loadMessages();
+    loadOnlineUsers();
+  } else {
+    window.location.href = "/"; // Redirect jika belum login
   }
-
-  currentUser = user;
-
-  // Tandai online
-  update(ref(db, "users/" + user.uid), { online: true });
-
-  // Load data user untuk mention dan role
-  onValue(ref(db, "users"), (snapshot) => {
-    userMap = snapshot.val() || {};
-    updateUserList();
-  });
-
-  // Load chat
-  onChildAdded(ref(db, "messages"), (snapshot) => {
-    const msg = snapshot.val();
-    const sender = userMap[msg.uid]?.username || "Unknown";
-    const role = userMap[msg.uid]?.role === "admin" ? `<span class="text-red-500 text-xs">(Admin)</span>` : "";
-    const mentionClass = msg.text.includes(`@${userMap[user.uid]?.username}`) ? "bg-yellow-100" : "";
-
-    const isPrivate = msg.to && msg.to === user.uid;
-
-    if (!msg.to || isPrivate || msg.uid === user.uid) {
-      chatBox.innerHTML += `
-        <div class="p-2 ${mentionClass}">
-          <strong>${sender}</strong> ${role}: ${msg.text}
-        </div>
-      `;
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
-  });
 });
 
 // Kirim pesan
-sendBtn.addEventListener("click", async () => {
+sendBtn.addEventListener("click", () => {
   const text = messageInput.value.trim();
   if (!text) return;
 
-  let messageData = {
-    uid: currentUser.uid,
+  const messagesRef = ref(db, "messages");
+  push(messagesRef, {
+    uid: currentUserUID,
+    username: currentUserName,
+    role: currentUserRole,
     text,
-    timestamp: Date.now()
-  };
+    timestamp: serverTimestamp()
+  });
 
-  // Deteksi private chat: /pm @username pesan
-  if (text.startsWith("/pm @")) {
-    const split = text.split(" ");
-    const targetUsername = split[1]?.replace("@", "");
-    const target = Object.entries(userMap).find(([, u]) => u.username === targetUsername);
-
-    if (target) {
-      const [targetUid] = target;
-      messageData.to = targetUid;
-      messageData.text = split.slice(2).join(" ");
-    }
-  }
-
-  await push(ref(db, "messages"), messageData);
   messageInput.value = "";
 });
 
+// Load pesan
+function loadMessages() {
+  const messagesRef = ref(db, "messages");
+  onChildAdded(messagesRef, (snapshot) => {
+    const msg = snapshot.val();
+    const el = document.createElement("div");
+    el.className = "mb-1";
+
+    // Mention highlight
+    let content = msg.text;
+    if (content.includes(`@${currentUserName}`)) {
+      el.classList.add("bg-yellow-100", "p-1", "rounded");
+    }
+
+    el.innerHTML = `<strong class="text-violet-700">${msg.username}</strong>: ${content}`;
+    chatBox.appendChild(el);
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    // Notifikasi jika admin kirim perhatian
+    if (msg.role === "admin" && msg.text.toLowerCase().includes("perhatian")) {
+      alert(`🔔 Pesan penting dari admin:\n${msg.text}`);
+    }
+  });
+}
+
+// Tampilkan pengguna online
+function loadOnlineUsers() {
+  const usersRef = ref(db, "users");
+  onValue(usersRef, (snapshot) => {
+    userList.innerHTML = "";
+    snapshot.forEach(child => {
+      const user = child.val();
+      if (user.online) {
+        const li = document.createElement("div");
+        li.className = "flex items-center gap-2";
+        li.innerHTML = `<span class="text-green-500">●</span> ${user.username}`;
+        userList.appendChild(li);
+      }
+    });
+  });
+}
+
 // Logout
-document.getElementById("logoutBtn").addEventListener("click", async () => {
-  await update(ref(db, "users/" + currentUser.uid), { online: false });
-  await signOut(auth);
-  location.href = "index.html";
+logoutBtn.addEventListener("click", () => {
+  if (currentUserUID) {
+    update(ref(db, `users/${currentUserUID}`), { online: false });
+  }
+  auth.signOut().then(() => {
+    window.location.href = "/";
+  });
 });
 
-// Tampilkan daftar user
-function updateUserList() {
-  userList.innerHTML = "";
-  for (const [uid, user] of Object.entries(userMap)) {
-    const online = user.online ? "🟢" : "⚪";
-    userList.innerHTML += `<div>@${user.username} ${online}</div>`;
-  }
+// Admin panel
+function showAdminControls() {
+  const adminPanel = document.createElement("div");
+  adminPanel.innerHTML = `
+    <div class="p-3 border-t mt-4 bg-gray-100 rounded">
+      <h3 class="text-sm font-bold mb-2">🛠 Admin Panel</h3>
+      <button onclick="alert('fitur ban user nanti')" class="bg-red-500 text-white px-3 py-1 rounded">Ban User</button>
+    </div>
+  `;
+  document.body.appendChild(adminPanel);
 }
+
+// Tombol refresh
+function createRefreshButton() {
+  const btn = document.createElement("button");
+  btn.textContent = "🔄 Refresh Chat";
+  btn.className = "fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded shadow-lg z-50";
+  btn.onclick = () => window.location.reload();
+  document.body.appendChild(btn);
+}
+
+createRefreshButton();
