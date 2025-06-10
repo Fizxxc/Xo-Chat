@@ -15,7 +15,7 @@ import {
   signOut
 } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
 
-import { firebaseConfig } from './firebase-config.js';
+import { firebaseConfig } from '/firebase-config.js';
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
