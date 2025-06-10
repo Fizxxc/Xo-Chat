@@ -5,86 +5,67 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>XO CHAT</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            darkPurple: '#1e1b2e',
-            panelPurple: '#2a213d',
-            chatPurple: '#3b2e5a',
-            inputPurple: '#4a3b69',
-          }
-        }
-      }
-    }
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body class="bg-darkPurple text-white">
+<body class="bg-[#1e1b2e] text-white">
 
-  <div class="max-w-5xl mx-auto mt-6 p-4 sm:p-6 bg-panelPurple rounded-xl shadow-md border border-purple-700 relative">
+  <!-- Container -->
+  <div class="max-w-6xl mx-auto mt-6 p-4 sm:p-6 bg-[#2a2640] rounded-xl shadow-md">
+    <!-- Header -->
     <div class="flex justify-between items-center mb-4">
-      <h2 class="text-2xl font-bold text-purple-400">💬 Xo Chat</h2>
-
-      <!-- Toggle Button -->
-      <div class="sm:hidden">
-        <button id="toggleUserList" class="text-white text-2xl focus:outline-none">
-          ⋮
-        </button>
+      <h2 class="text-xl font-bold">💬 XO Chat</h2>
+      <div class="flex items-center gap-2">
+        <!-- Mobile menu button -->
+        <button id="menuToggle" class="sm:hidden text-white text-xl">⋮</button>
+        <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">Logout</button>
       </div>
-
-      <button id="logoutBtn" class="hidden sm:block bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded">
-        Logout
-      </button>
     </div>
 
     <div class="flex flex-col sm:flex-row gap-4">
       <!-- Chat Area -->
       <div class="w-full sm:w-3/4 flex flex-col">
-        <div id="chatBox" class="border border-purple-600 p-3 h-[400px] overflow-y-auto rounded mb-2 bg-chatPurple text-sm"></div>
+        <div id="chatBox" class="border border-gray-600 p-3 h-[400px] overflow-y-auto rounded mb-2 bg-[#3a3457]"></div>
         <div class="flex">
-          <input id="messageInput" type="text" placeholder="Tulis pesan..."
-            class="flex-grow p-2 bg-inputPurple border border-purple-500 text-white placeholder-purple-300 rounded-l focus:outline-none focus:ring-2 focus:ring-purple-500">
-          <button id="sendBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 rounded-r">
-            Kirim
-          </button>
+          <input id="messageInput" type="text" placeholder="Tulis pesan..." class="flex-grow p-2 border border-gray-600 bg-[#2d2944] rounded-l text-white placeholder-gray-400">
+          <button id="sendBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 rounded-r">Kirim</button>
         </div>
       </div>
 
-      <!-- User List Sidebar -->
-      <div id="userSidebar"
-        class="hidden sm:block w-full sm:w-1/4 bg-chatPurple p-3 rounded border border-purple-500 max-h-[400px] overflow-y-auto transition-all">
-        <h3 class="font-semibold mb-2 text-purple-300">🟢 Pengguna Online</h3>
-        <div id="userList" class="text-sm space-y-2"></div>
+      <!-- Sidebar untuk Desktop -->
+      <div class="hidden sm:block w-full sm:w-1/4">
+        <h3 class="font-semibold mb-2">🟢 Online Users</h3>
+        <div id="userList" class="text-sm space-y-1 bg-[#3a3457] p-3 rounded h-[400px] overflow-y-auto"></div>
       </div>
-    </div>
-
-    <!-- Mobile Sidebar (Drawer) -->
-    <div id="mobileUserDrawer"
-      class="fixed top-0 right-0 h-full w-64 bg-chatPurple shadow-lg border-l border-purple-700 transform translate-x-full transition-transform duration-300 z-50 sm:hidden">
-      <div class="p-4 flex justify-between items-center border-b border-purple-700">
-        <h3 class="font-semibold text-purple-300">🟢 Pengguna Online</h3>
-        <button id="closeDrawer" class="text-white text-xl">&times;</button>
-      </div>
-      <div id="userListMobile" class="p-4 text-sm space-y-2 overflow-y-auto h-[calc(100%-60px)]"></div>
     </div>
   </div>
 
+  <!-- Drawer Mobile -->
+  <div id="mobileDrawer" class="fixed top-0 right-0 w-64 h-full bg-[#2d2944] shadow-lg p-4 transform translate-x-full transition-transform duration-300 sm:hidden z-50">
+    <h3 class="text-lg font-semibold mb-2">🟢 Online Users</h3>
+    <div id="userListMobile" class="space-y-1 text-sm overflow-y-auto h-[80vh]"></div>
+  </div>
+
+  <!-- Script -->
   <script type="module" src="./firebase-config.js"></script>
   <script type="module" src="./chat.js"></script>
 
   <script>
-    // Toggle drawer
-    const toggleBtn = document.getElementById('toggleUserList');
-    const drawer = document.getElementById('mobileUserDrawer');
-    const closeDrawer = document.getElementById('closeDrawer');
+    const menuToggle = document.getElementById("menuToggle");
+    const mobileDrawer = document.getElementById("mobileDrawer");
 
-    toggleBtn?.addEventListener('click', () => {
-      drawer.classList.remove('translate-x-full');
+    menuToggle.addEventListener("click", () => {
+      if (mobileDrawer.classList.contains("translate-x-full")) {
+        mobileDrawer.classList.remove("translate-x-full");
+      } else {
+        mobileDrawer.classList.add("translate-x-full");
+      }
     });
 
-    closeDrawer?.addEventListener('click', () => {
-      drawer.classList.add('translate-x-full');
+    // Klik luar drawer untuk menutup (opsional)
+    window.addEventListener("click", (e) => {
+      if (!mobileDrawer.contains(e.target) && !menuToggle.contains(e.target)) {
+        mobileDrawer.classList.add("translate-x-full");
+      }
     });
   </script>
 </body>
