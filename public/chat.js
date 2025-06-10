@@ -82,8 +82,8 @@ async function handleBotQuestion(messageText) {
 
     const messagesRef = ref(db, "messages");
     push(messagesRef, {
-      uid: "copilot-bot",
-      username: "Copilot Bot 🤖",
+      uid: "xoai-bot",
+      username: "XO AI Bot 🤖",
       role: "bot",
       text: reply,
       timestamp: serverTimestamp()
@@ -98,25 +98,44 @@ function loadMessages() {
   const messagesRef = ref(db, "messages");
   onChildAdded(messagesRef, (snapshot) => {
     const msg = snapshot.val();
-    const el = document.createElement("div");
-    el.className = "mb-1";
+    const bubble = document.createElement("div");
 
-    // Mention highlight
-    let content = msg.text;
-    if (content.includes(`@${currentUserName}`)) {
-      el.classList.add("bg-yellow-100", "p-1", "rounded");
+    const isCurrentUser = msg.uid === currentUserUID;
+    const isBot = msg.role === "bot";
+
+    bubble.className = `mb-2 flex ${isCurrentUser ? "justify-end" : "justify-start"}`;
+
+    const bubbleContent = document.createElement("div");
+    bubbleContent.className = `
+      max-w-xs px-3 py-2 rounded-lg text-sm 
+      ${isCurrentUser 
+        ? "bg-violet-600 text-white rounded-br-none" 
+        : isBot 
+          ? "bg-gray-700 text-white rounded-bl-none" 
+          : "bg-violet-200 text-black rounded-bl-none"}
+    `;
+
+    // Highlight jika ada mention
+    if (msg.text.includes(`@${currentUserName}`)) {
+      bubbleContent.classList.add("ring", "ring-yellow-400");
     }
 
-    el.innerHTML = `<strong class="text-violet-700">${msg.username}</strong>: ${content}`;
-    chatBox.appendChild(el);
+    bubbleContent.innerHTML = `
+      <div class="font-semibold text-xs mb-1">${msg.username}</div>
+      <div>${msg.text}</div>
+    `;
+
+    bubble.appendChild(bubbleContent);
+    chatBox.appendChild(bubble);
     chatBox.scrollTop = chatBox.scrollHeight;
 
-    // Notifikasi jika admin kirim perhatian
+    // Jika pesan dari admin dan mengandung kata perhatian
     if (msg.role === "admin" && msg.text.toLowerCase().includes("perhatian")) {
       alert(`🔔 Pesan penting dari admin:\n${msg.text}`);
     }
   });
 }
+
 
 // Tampilkan pengguna online
 function loadOnlineUsers() {
