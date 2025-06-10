@@ -5,32 +5,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>XO CHAT</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background-color: #7c3aed;
+      border-radius: 8px;
+    }
+  </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-900 text-white font-sans">
 
-  <div class="max-w-5xl mx-auto mt-6 p-4 bg-white rounded-xl shadow-md">
+  <div class="max-w-5xl mx-auto mt-6 p-4 bg-gray-800 rounded-xl shadow-lg">
     <div class="flex justify-between items-center mb-4">
-      <h2 class="text-xl font-bold">💬 Xo Chat</h2>
+      <h2 class="text-xl font-bold text-violet-400">💬 XO Chat</h2>
       <div class="flex items-center gap-2">
-        <button id="toggleUserList" class="md:hidden bg-gray-200 px-2 py-1 rounded">👥</button>
-        <button id="logoutBtn" class="bg-red-500 text-white px-3 py-1 rounded">Logout</button>
+        <button id="toggleUserList" class="md:hidden bg-gray-700 px-2 py-1 rounded text-white">👥</button>
+        <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded">Logout</button>
       </div>
     </div>
 
     <div class="flex flex-col md:flex-row gap-4">
       <!-- Chat Area -->
       <div class="md:w-3/4 w-full flex flex-col">
-        <div id="chatBox" class="border p-3 h-[400px] overflow-y-auto rounded mb-2 bg-gray-50 text-sm"></div>
+        <div id="chatBox" class="border border-gray-700 p-3 h-[450px] overflow-y-auto rounded mb-2 bg-gray-900 text-sm space-y-2">
+          <!-- Chat bubbles will be inserted here -->
+        </div>
         <div class="flex">
-          <input id="messageInput" type="text" placeholder="Tulis pesan..." class="flex-grow p-2 border rounded-l text-sm">
-          <button id="sendBtn" class="bg-violet-600 text-white px-4 rounded-r text-sm">Kirim</button>
+          <input id="messageInput" type="text" placeholder="Tulis pesan..." class="flex-grow p-2 bg-gray-700 text-white border border-gray-600 rounded-l text-sm focus:outline-none" />
+          <button id="sendBtn" class="bg-violet-600 hover:bg-violet-700 text-white px-4 rounded-r text-sm">Kirim</button>
         </div>
       </div>
 
       <!-- User List -->
       <div id="userListContainer" class="md:w-1/4 w-full hidden md:block">
-        <h3 class="font-bold mb-2">🟢 Online Users</h3>
-        <div id="userList" class="text-sm space-y-1"></div>
+        <h3 class="font-bold mb-2 text-violet-400">🟢 Pengguna Online</h3>
+        <div id="userList" class="text-sm space-y-1 bg-gray-700 p-2 rounded h-[450px] overflow-y-auto"></div>
       </div>
     </div>
   </div>
