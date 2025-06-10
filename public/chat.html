@@ -6,28 +6,28 @@
   <title>XO CHAT</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100">
+<body class="bg-[#1e1b2e] text-white">
 
-  <div class="max-w-5xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-md">
-    <div class="flex justify-between mb-4">
-      <h2 class="text-xl font-semibold">💬 Xo Chat</h2>
-      <button id="logoutBtn" class="bg-red-500 text-white px-3 py-1 rounded">Logout</button>
+  <div class="max-w-5xl mx-auto mt-10 p-6 bg-[#2a213d] rounded-xl shadow-md border border-purple-700">
+    <div class="flex justify-between mb-4 items-center">
+      <h2 class="text-2xl font-bold text-purple-400">💬 Xo Chat</h2>
+      <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded">Logout</button>
     </div>
 
     <div class="flex gap-4">
       <!-- Chat Area -->
       <div class="w-3/4 flex flex-col">
-        <div id="chatBox" class="border p-3 h-[400px] overflow-y-auto rounded mb-2 bg-gray-50"></div>
+        <div id="chatBox" class="border border-purple-600 p-3 h-[400px] overflow-y-auto rounded mb-2 bg-[#3b2e5a] text-sm"></div>
         <div class="flex">
-          <input id="messageInput" type="text" placeholder="Tulis pesan..." class="flex-grow p-2 border rounded-l">
-          <button id="sendBtn" class="bg-blue-600 text-white px-4 rounded-r">Kirim</button>
+          <input id="messageInput" type="text" placeholder="Tulis pesan..." class="flex-grow p-2 bg-[#4a3b69] border border-purple-500 text-white placeholder-purple-300 rounded-l focus:outline-none focus:ring-2 focus:ring-purple-500">
+          <button id="sendBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 rounded-r">Kirim</button>
         </div>
       </div>
 
       <!-- User List -->
       <div class="w-1/4">
-        <h3 class="font-bold mb-2">🟢 Online Users</h3>
-        <div id="userList" class="text-sm space-y-1"></div>
+        <h3 class="font-semibold mb-2 text-purple-400">🟢 Pengguna Online</h3>
+        <div id="userList" class="text-sm space-y-2 bg-[#3b2e5a] p-2 rounded border border-purple-500 max-h-[400px] overflow-y-auto"></div>
       </div>
     </div>
   </div>
