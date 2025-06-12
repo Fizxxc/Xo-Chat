@@ -1,28 +1,49 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Xo Chat - Login/Register</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <meta charset="UTF-8">
+  <title>XO Chat</title>
+  <script type="module" src="./auth.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss/dist/tailwind.min.css">
 </head>
-<body class="bg-[#1e1b2e] flex items-center justify-center min-h-screen">
-
-  <div class="bg-[#2a213d] p-6 rounded-xl shadow-lg w-full max-w-md border border-purple-600">
-    <h2 class="text-3xl font-bold text-center mb-6 text-purple-400">Xo Chat</h2>
-    
-    <input id="username" type="text" placeholder="Username (untuk register)" class="w-full mb-3 p-2 bg-[#3b2e5a] text-white placeholder-purple-300 border border-purple-500 rounded focus:outline-none focus:ring-2 focus:ring-purple-500">
-    <input id="email" type="email" placeholder="Email" class="w-full mb-3 p-2 bg-[#3b2e5a] text-white placeholder-purple-300 border border-purple-500 rounded focus:outline-none focus:ring-2 focus:ring-purple-500">
-    <input id="password" type="password" placeholder="Password" class="w-full mb-5 p-2 bg-[#3b2e5a] text-white placeholder-purple-300 border border-purple-500 rounded focus:outline-none focus:ring-2 focus:ring-purple-500">
-
-    <div class="flex justify-between">
-      <button id="loginBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded">Login</button>
-      <button id="registerBtn" class="bg-purple-400 hover:bg-purple-500 text-white px-4 py-2 rounded">Register</button>
-    </div>
+<body class="bg-gray-100">
+  <div class="p-4">
+    <h1 class="text-2xl font-bold mb-4">XO Chat - Selamat datang</h1>
+    <div id="userList" class="space-y-2"></div>
+    <button id="logoutBtn" class="mt-6 bg-red-500 text-white px-4 py-2 rounded">Logout</button>
   </div>
+  <script type="module">
+    import { auth, db, ref, onValue, signOut } from './firebase.js';
 
-  <script type="module" src="./firebase-config.js"></script>
-  <script type="module" src="./index.js"></script>
+    const userList = document.getElementById('userList');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    auth.onAuthStateChanged(user => {
+      if (!user) return (window.location.href = 'login.html');
+
+      const usersRef = ref(db, 'users');
+      onValue(usersRef, snapshot => {
+        userList.innerHTML = '';
+        snapshot.forEach(child => {
+          const data = child.val();
+          if (child.key !== user.uid) {
+            const btn = document.createElement('button');
+            btn.textContent = data.email;
+            btn.className = 'block bg-white p-2 rounded shadow w-full text-left';
+            btn.onclick = () => {
+              localStorage.setItem('chatWith', child.key);
+              localStorage.setItem('chatWithName', data.email);
+              window.location.href = 'chat.html';
+            };
+            userList.appendChild(btn);
+          }
+        });
+      });
+    });
+
+    logoutBtn.onclick = () => {
+      signOut(auth);
+    };
+  </script>
 </body>
 </html>
